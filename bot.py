@@ -8,15 +8,24 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.client.default import DefaultBotProperties
+import os
 
 # Включите логирование, чтобы видеть, что происходит
 logging.basicConfig(level=logging.INFO)
 
-# Замените 'YOUR_TELEGRAM_BOT_TOKEN' на токен вашего бота
-BOT_TOKEN = '7912455110:AAHwkLisAt4ly2mzIKOsMlj-EFoHa16vi2c'  # Замените на свой токен
+# Токен вашего бота (теперь получаем из переменной окружения)
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+if BOT_TOKEN is None:
+    print("Error: BOT_TOKEN environment variable not set!")
+    exit()  # Exit the program if BOT_TOKEN is not set
 
-# ID чата для пересылки заявок (замените на свой ID)
-ADMIN_CHAT_ID = -1002296409455
+# ID администратора (теперь получаем из переменной окружения)
+try:
+    ADMIN_CHAT_ID = int(os.environ.get("ADMIN_CHAT_ID"))
+except (ValueError, TypeError):
+    print("Error: ADMIN_CHAT_ID environment variable not set or not an integer!")
+    ADMIN_CHAT_ID = None  # Or some default value if appropriate
+    exit() # Exit the program if ADMIN_CHAT_ID is not valid
 
 # Путь к картинке
 IMAGE_PATH = "image.jpg"  # Замените на фактический путь к вашей картинке
