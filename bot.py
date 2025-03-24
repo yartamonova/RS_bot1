@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, ContentTypeFilter  # Import ContentTypeFilter
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
@@ -118,7 +118,7 @@ async def process_profile_info(message: Message, state: FSMContext):
         await state.clear()  # Сбрасываем состояние в случае ошибки
 
 # Шаг 5: Обрабатываем демку (аудиофайл)
-@dp.message(DemoForm.waiting_for_demo, types.ContentTypeFilter(types.ContentType.AUDIO))
+@dp.message(DemoForm.waiting_for_demo, ContentTypeFilter(types.ContentType.AUDIO)) # Use ContentTypeFilter from aiogram.filters
 async def process_demo(message: Message, state: FSMContext):
     if message.audio and message.audio.mime_type == "audio/mpeg":
         try:
