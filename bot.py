@@ -92,7 +92,27 @@ async def fill_form_callback(callback: CallbackQuery, state: FSMContext):
         "5. Жанр трека\n"
         "6. Ссылка на твою карточку артиста в Яндекс музыке\n"
         "7. Твой ник в Telegram\n"
-        "8. Прикрепи к сообщению демку в формате MP3"
+    )
+    await state.set_state(DemoForm.waiting_for_something) # Ждем чего угодно
+    await callback.answer()
+
+# Шаг 4 & 5: Обрабатываем любое сообщение и пересылаем
+@dp.message(DemoForm.waiting_for_something)
+async def process_anything(message: Message, state: FSMContext):
+    try:
+        await bot.forward_message(chat_id=ADMIN_CHAT_ID, from_chat_id=message.chat.id, message_id=message.message_id)  # Пересылаем сообщение в чат админа
+    except Exception as e:
+        print(f"Ошибка при пересылке: {e}")
+        await message.reply("Произошла ошибка при пересылке сообщения.")
+        
+    )
+    await state.clear()  # Сбрасываем состояние
+
+# Шаг 3: Обработчик нажатия кнопки "Заполнить анкету"
+@dp.callback_query(F.data == "fill_form")
+async def fill_form_callback(callback: CallbackQuery, state: FSMContext):
+    await bot.send_message(callback.message.chat.id,
+        "Отправь свою демку в формате MP3"
     )
     await state.set_state(DemoForm.waiting_for_something) # Ждем чего угодно
     await callback.answer()
@@ -110,7 +130,7 @@ async def process_anything(message: Message, state: FSMContext):
         [InlineKeyboardButton(text="Отправить ещё одну демку", callback_data="send_demo")]
     ])
     await bot.send_message(message.chat.id,
-        "Супер!\nАнкета отправлена \n\nПослушаем и дадим обратную связь\n\n <i>Если отправился демо-трек без анкеты или наоборот, нажимай «Отправить ещё одну демку» и прикрепляй к анкете только неотправленную часть</i>",
+        "Супер!\nАнкета отправлена \n\nПослушаем и дадим обратную связь",
         reply_markup=keyboard
     )
     await state.clear()  # Сбрасываем состояние
