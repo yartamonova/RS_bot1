@@ -27,7 +27,7 @@ except (ValueError, TypeError):
     exit() # Exit the program if ADMIN_CHAT_ID is not valid
 
 # Путь к картинке
-IMAGE_PATH = "image1.jpg"  # Замените на фактический путь к вашей картинке
+IMAGE_PATH = "image2.jpg"  # Замените на фактический путь к вашей картинке
 
 # Инициализация бота и диспетчера
 bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML) # parse_mode передается напрямую
@@ -45,7 +45,7 @@ async def start_command(message: Message, state: FSMContext):
     try:
         # Отправляем картинку
         with open(IMAGE_PATH, "rb") as photo:
-            await bot.send_photo(message.chat.id, photo=types.BufferedInputFile(photo.read(), filename="image1.jpg"))
+            await bot.send_photo(message.chat.id, photo=types.BufferedInputFile(photo.read(), filename="image2.jpg"))
 
         # Отправляем текст с кнопкой
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
