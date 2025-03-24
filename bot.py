@@ -75,7 +75,7 @@ async def send_demo_callback(callback: CallbackQuery, state: FSMContext):
         "1. Трек подходит жанрово нашему лейблу\n"
         "2. Трек закончен на 90% <i>(не обязательно, чтобы трек был отмастерен и сведён)</i>\n"
         "3. Если у тебя много демок, выбери 1-2 лучших для отправки. Не отправляй сразу всё\n"
-        "4. К предложению принимаются ТОЛЬКО не подписанные другими лейблами демо-треки",
+        "4. К предложению принимаются <b><ins>ТОЛЬКО</ins></b> не подписанные другими лейблами демо-треки",
         reply_markup=keyboard
     )
     await callback.answer()
@@ -84,7 +84,7 @@ async def send_demo_callback(callback: CallbackQuery, state: FSMContext):
 @dp.callback_query(F.data == "fill_form")
 async def fill_form_callback(callback: CallbackQuery, state: FSMContext):
     await bot.send_message(callback.message.chat.id,
-        "Отправляй всё ОДНИМ сообщением\n\nРасскажи нам о себе:\n"
+        "Отправляй всё <b><ins>ОДНИМ</ins></b> сообщением\n\nРасскажи нам о себе:\n"
         "1. Артистический псевдоним\n"
         "2. Кратко о себе <i>(как зовут, откуда ты, как давно занимаешься музыкой, на каких лейблах выпускаешь музыку, играешь ли ты на других вечеринках (если да, то на каких)</i>)\n"
         "3. Прикрепи ссылку на свой Instagram\n"
