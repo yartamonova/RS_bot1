@@ -83,7 +83,7 @@ async def send_demo_callback(callback: CallbackQuery, state: FSMContext):
 @dp.callback_query(F.data == "fill_form")
 async def fill_form_callback(callback: CallbackQuery, state: FSMContext):
     await bot.send_message(callback.message.chat.id,
-        "Отправляй всё <b><ins>ОДНИМ</ins></b> сообщением \n <i>это удобно делать с компьютера </i>\n\nРасскажи нам о себе:\n"
+        "Отправляй всё <b><ins>ОДНИМ</ins></b> сообщением \n\nРасскажи нам о себе:\n"
         "1. Артистический псевдоним\n"
         "2. Кратко о себе <i>(как зовут; откуда ты; как давно занимаешься музыкой; на каких лейблах выпускаешь музыку и играешь ли на вечеринках: если да, то на каких)</i>\n"
         "3. Прикрепи ссылку на свой Instagram\n"
