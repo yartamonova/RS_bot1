@@ -10,7 +10,6 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.client.default import DefaultBotProperties
 import os
 from aiogram import Bot, Dispatcher, types
-from aiogram.enums import ParseMode
 
 # Включите логирование, чтобы видеть, что происходит
 logging.basicConfig(level=logging.INFO)
@@ -85,7 +84,7 @@ async def send_demo_callback(callback: CallbackQuery, state: FSMContext):
 @dp.callback_query(F.data == "fill_form")
 async def fill_form_callback(callback: CallbackQuery, state: FSMContext):
     await bot.send_message(callback.message.chat.id,
-        "Отправляй всё ОДНИМ сообщением\n\nРасскажи нам о себе:\n"
+        "Отправляй всё <b><ins>ОДНИМ сообщением</b></ins>\n\nРасскажи нам о себе:\n"
         "1. Артистический псевдоним\n"
         "2. Кратко о себе <i>(как зовут, откуда ты, как давно занимаешься музыкой, на каких лейблах выпускаешь музыку, играешь ли ты на других вечеринках (если да, то на каких)</i>)\n"
         "3. Прикрепи ссылку на свой Instagram\n"
