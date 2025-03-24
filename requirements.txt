@@ -2,3 +2,5 @@ aiogram==3.18.0
 aiohttp
 python-dotenv
 Pillow
+aiogram==3.3.0  # Или более поздняя версия, если доступна
+python-dotenv==1.0.0 # Или более поздняя версия, если доступна
