@@ -85,7 +85,7 @@ async def fill_form_callback(callback: CallbackQuery, state: FSMContext):
     await bot.send_message(callback.message.chat.id,
         "Отправляй всё <b><ins>ОДНИМ</ins></b> сообщением \n\nРасскажи нам о себе:\n"
         "1. Артистический псевдоним\n"
-        "2. Кратко о себе <i>(как зовут; откуда ты; как давно занимаешься музыкой; на каких лейблах выпускаешь музыку; играешь ли на вечеринках: если да, то на каких)</i>\n"
+        "2. Кратко о себе <i>(как зовут; откуда ты; как давно занимаешься музыкой; на каких лейблах выпускаешься; играешь ли на вечеринках: если да, то на каких)</i>\n"
         "3. Прикрепи ссылку на свой Instagram\n"
         "4. Название трека\n"
         "5. Жанр трека\n"
@@ -102,7 +102,7 @@ async def process_profile_info(message: Message, state: FSMContext):
     try:
         await bot.forward_message(chat_id=ADMIN_CHAT_ID, from_chat_id=message.chat.id, message_id=message.message_id)  # Пересылаем сообщение в чат админа
         await state.set_state(DemoForm.waiting_for_demo) # Переходим в состояние ожидания демки
-        await message.reply("Отлично! \тn\n Теперь отправь демку в формате MP3")
+        await message.reply("Отлично! \n\n Теперь отправь демку в формате MP3")
     except Exception as e:
         print(f"Ошибка при пересылке: {e}")
         await message.reply("Произошла ошибка при пересылке сообщения. Попробуйте еще раз.")
