@@ -7,7 +7,6 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.client.default import DefaultBotProperties
 import os
 
 # Включите логирование, чтобы видеть, что происходит
@@ -31,7 +30,7 @@ except (ValueError, TypeError):
 IMAGE_PATH = "image1.jpg"  # Замените на фактический путь к вашей картинке
 
 # Инициализация бота и диспетчера
-bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML) # parse_mode передается напрямую
 dp = Dispatcher()
 
 # FSM (Состояния)
@@ -91,7 +90,8 @@ async def fill_form_callback(callback: CallbackQuery, state: FSMContext):
         "4. Название трека\n"
         "5. Жанр трека\n"
         "6. Ссылка на твою карточку артиста в Яндекс музыке\n"
-        "7. Твой ник в Telegram\n"
+        "7. Твой ник в Telegram\n",
+        parse_mode=ParseMode.HTML  # parse_mode добавлен
     )
     await state.set_state(DemoForm.waiting_for_profile_info) # Ждем информацию профиля (1-7)
     await callback.answer()
@@ -109,7 +109,7 @@ async def process_profile_info(message: Message, state: FSMContext):
         await state.clear() # Сбрасываем состояние
 
 # Шаг 5: Обрабатываем демку (пункт 8)
-@dp.message(DemoForm.waiting_for_demo, content_types=types.ContentType.AUDIO) # Фильтруем только AUDIO
+@dp.message(DemoForm.waiting_for_demo, F.audio) # F.audio - более современный способ фильтрации аудио
 async def process_demo(message: Message, state: FSMContext):
     try:
         await bot.forward_message(chat_id=ADMIN_CHAT_ID, from_chat_id=message.chat.id, message_id=message.message_id)  # Пересылаем демку в чат админа
