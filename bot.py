@@ -2,7 +2,8 @@ import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters import CommandStart, ContentTypeFilter  # Import ContentTypeFilter
+from aiogram.filters import CommandStart
+from aiogram.filters.content_types import ContentTypeFilter # Import ContentTypeFilter
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
