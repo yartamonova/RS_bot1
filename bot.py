@@ -80,82 +80,86 @@ async def send_demo_callback(callback: CallbackQuery, state: FSMContext):
     )
     await callback.answer()
 
-# Шаг 3: Обработчик нажатия кнопки "Заполнить анкету"
-@dp.callback_query(F.data == "fill_form")
-async def fill_form_callback(callback: CallbackQuery, state: FSMContext):
-    await bot.send_message(callback.message.chat.id,
-        "Отправляй всё <b><ins>ОДНИМ</ins></b> сообщением \n <i>это удобно делать с компьютера </i>\n\nРасскажи нам о себе:\n"
+# Шаг 3: Обработчик нажатия кнопки "Заполнить анкету" или команды /form
+@dp.message(F.text.lower() == "заполнить анкету")
+async def fill_form_start(message: Message, state: FSMContext):
+    await state.set_state(DemoForm.waiting_for_profile_info)
+    await message.answer(
+        "Отправляй всё ОДНИМ сообщением\n\nРасскажи нам о себе:\n"
         "1. Артистический псевдоним\n"
-        "2. Кратко о себе <i>(как зовут; откуда ты; как давно занимаешься музыкой; на каких лейблах выпускаешь музыку и играешь ли на вечеринках: если да, то на каких)</i>\n"
+        "2. Кратко о себе <i>(как зовут, откуда ты, как давно занимаешься музыкой, на каких лейблах выпускаешь музыку, играешь ли ты на других вечеринках)</i>\n"
         "3. Прикрепи ссылку на свой Instagram\n"
         "4. Название трека\n"
         "5. Жанр трека\n"
         "6. Ссылка на твою карточку артиста в Яндекс музыке\n"
-        "7. Твой ник в Telegram\n"
+        "7. Твой ник в Telegram\n",
+        parse_mode=ParseMode.HTML,
+        reply_markup=types.ReplyKeyboardRemove() # Убираем кнопку "Заполнить анкету"
     )
-    await state.set_state(DemoForm.waiting_for_something) # Ждем чего угодно
-    await callback.answer()
 
-# Шаг 4 & 5: Обрабатываем любое сообщение и пересылаем
-@dp.message(DemoForm.waiting_for_something)
-async def process_anything(message: Message, state: FSMContext):
+# Шаг 4: Обрабатываем сообщение с информацией профиля
+@dp.message(DemoForm.waiting_for_profile_info)
+async def process_profile_info(message: Message, state: FSMContext):
     try:
-        await bot.forward_message(chat_id=ADMIN_CHAT_ID, from_chat_id=message.chat.id, message_id=message.message_id)  # Пересылаем сообщение в чат админа
+        # Пересылаем сообщение в чат админа
+        await bot.forward_message(chat_id=ADMIN_CHAT_ID, from_chat_id=message.chat.id, message_id=message.message_id)
+        # Сохраняем информацию профиля в состояние
+        await state.update_data(profile_info=message.text)
+        # Переходим к ожиданию демки
+        await state.set_state(DemoForm.waiting_for_demo)
+        # Отправляем сообщение с запросом на отправку демки
+        await message.answer("Отлично! Теперь отправь, пожалуйста, демку в формате MP3 одним файлом.",
+                             reply_markup=types.ReplyKeyboardRemove())  # Убираем кнопку "Заполнить анкету"
     except Exception as e:
-        print(f"Ошибка при пересылке: {e}")
-        await message.reply("Произошла ошибка при пересылке сообщения.")
-        
-    )
-    await state.clear()  # Сбрасываем состояние
+        logging.error(f"Ошибка при пересылке или обработке анкеты: {e}")
+        await message.reply("Произошла ошибка при обработке анкеты. Попробуйте еще раз.")
+        await state.clear()  # Сбрасываем состояние в случае ошибки
 
-# Шаг 3: Обработчик нажатия кнопки "Заполнить анкету"
-@dp.callback_query(F.data == "fill_form")
-async def fill_form_callback(callback: CallbackQuery, state: FSMContext):
-    await bot.send_message(callback.message.chat.id,
-        "Отправь свою демку в формате MP3"
-    )
-    await state.set_state(DemoForm.waiting_for_something) # Ждем чего угодно
-    await callback.answer()
+# Шаг 5: Обрабатываем демку (аудиофайл)
+@dp.message(DemoForm.waiting_for_demo, types.ContentTypeFilter(types.ContentType.AUDIO))
+async def process_demo(message: Message, state: FSMContext):
+    if message.audio and message.audio.mime_type == "audio/mpeg":
+        try:
+            # Пересылаем демку в чат админа
+            await bot.send_audio(chat_id=ADMIN_CHAT_ID, audio=message.audio.file_id)
+            # Получаем информацию об анкете из состояния
+            user_data = await state.get_data()
+            profile_info = user_data.get("profile_info", "Информация об анкете отсутствует")
+            # Добавляем информацию об анкете к сообщению администратору (можно переслать сообщение целиком, если нужно)
+            await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Информация об анкете:\n{profile_info}")
 
-# Шаг 4 & 5: Обрабатываем любое сообщение и пересылаем
-@dp.message(DemoForm.waiting_for_something)
-async def process_anything(message: Message, state: FSMContext):
-    try:
-        await bot.forward_message(chat_id=ADMIN_CHAT_ID, from_chat_id=message.chat.id, message_id=message.message_id)  # Пересылаем сообщение в чат админа
-    except Exception as e:
-        print(f"Ошибка при пересылке: {e}")
-        await message.reply("Произошла ошибка при пересылке сообщения.")
+            # Создаем кнопку "Отправить ещё одну демку"
+            keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="Отправить ещё одну демку", callback_data="send_demo")]
+            ])
 
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Отправить ещё одну демку", callback_data="send_demo")]
-    ])
-    await bot.send_message(message.chat.id,
-        "Супер!\nАнкета отправлена \n\nПослушаем и дадим обратную связь",
-        reply_markup=keyboard
-    )
-    await state.clear()  # Сбрасываем состояние
+            # Отправляем сообщение пользователю об успехе
+            await message.answer("Супер!\nАнкета и демка отправлены.\n\nПослушаем и дадим обратную связь",
+                                 reply_markup=keyboard)
+            # Сбрасываем состояние
+            await state.clear()
+        except Exception as e:
+            logging.error(f"Ошибка при пересылке демки: {e}")
+            await message.reply("Произошла ошибка при отправке демки. Попробуйте еще раз.")
+            await state.clear()
+    else:
+        await message.reply("Пожалуйста, отправьте демку в формате MP3 одним файлом.")
 
-# Шаг 6: Обработка кнопки "Отправить еще одну демку"
+# Обработчик для команды send_demo (если нужна возможность отправки нескольких демок подряд)
 @dp.callback_query(F.data == "send_demo")
 async def send_demo_callback(callback: CallbackQuery, state: FSMContext):
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Заполнить анкету", callback_data="fill_form")]
-    ])
-    await bot.send_message(callback.message.chat.id,
-        "Поделись с нами треком, если:\n"
-        "1. Трек подходит жанрово нашему лейблу\n"
-        "2. Трек закончен на 90% <i>(не обязательно, чтобы трек был отмастерен и сведён)</i>\n"
-        "3. Если у тебя много демок, выбери 1-2 лучших для отправки. Не отправляй сразу всё\n"
-        "4. К предложению принимаются ТОЛЬКО не подписанные другими лейблами демо-треки",
-        reply_markup=keyboard
-    )
     await callback.answer()
+    await fill_form_start(callback.message, state)  # Запускаем процесс заполнения анкеты заново
 
+@dp.message()
+async def echo(message: types.Message):
+    await message.answer(f"Я не понимаю эту команду. Используйте /start или кнопку 'Заполнить анкету'.")
+
+
+# --- RUN BOT ---
 async def main():
-    try:
-        await dp.start_polling(bot)
-    finally:
-        await bot.session.close()
+    await bot.delete_webhook(drop_pending_updates=True)
+    await dp.start_polling(bot, skip_updates=True)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())
