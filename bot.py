@@ -9,7 +9,6 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.client.default import DefaultBotProperties
 import os
-from aiogram import Bot, Dispatcher, types
 
 # Включите логирование, чтобы видеть, что происходит
 logging.basicConfig(level=logging.INFO)
@@ -37,7 +36,8 @@ dp = Dispatcher()
 
 # FSM (Состояния)
 class DemoForm(StatesGroup):
-    waiting_for_something = State()  # Состояние для ожидания чего-либо
+    waiting_for_profile_info = State()  # Состояние для ожидания информации профиля
+    waiting_for_demo = State() # Состояние для ожидания демки
 
 # --- Хэндлеры ---
 # Шаг 1: Обработчик команды /start
@@ -76,15 +76,16 @@ async def send_demo_callback(callback: CallbackQuery, state: FSMContext):
         "2. Трек закончен на 90% <i>(не обязательно, чтобы трек был отмастерен и сведён)</i>\n"
         "3. Если у тебя много демок, выбери 1-2 лучших для отправки. Не отправляй сразу всё\n"
         "4. К предложению принимаются <b><ins>ТОЛЬКО</ins></b> не подписанные другими лейблами демо-треки",
-        reply_markup=keyboard
+        reply_markup=keyboard, parse_mode=ParseMode.HTML
     )
     await callback.answer()
 
-# Шаг 3: Обработчик нажатия кнопки "Заполнить анкету" или команды /form
-@dp.message(F.text.lower() == "заполнить анкету")
-async def fill_form_start(message: Message, state: FSMContext):
+# Шаг 3: Обработчик нажатия кнопки "Заполнить анкету"
+@dp.callback_query(F.data == "fill_form")
+async def fill_form_callback(callback: CallbackQuery, state: FSMContext):
+    logging.info(f"User {callback.from_user.id} started filling the form.") # Логируем начало заполнения анкеты
     await state.set_state(DemoForm.waiting_for_profile_info)
-    await message.answer(
+    await bot.send_message(callback.message.chat.id,
         "Отправляй всё ОДНИМ сообщением\n\nРасскажи нам о себе:\n"
         "1. Артистический псевдоним\n"
         "2. Кратко о себе <i>(как зовут, откуда ты, как давно занимаешься музыкой, на каких лейблах выпускаешь музыку, играешь ли ты на других вечеринках)</i>\n"
@@ -93,14 +94,15 @@ async def fill_form_start(message: Message, state: FSMContext):
         "5. Жанр трека\n"
         "6. Ссылка на твою карточку артиста в Яндекс музыке\n"
         "7. Твой ник в Telegram\n",
-        parse_mode=ParseMode.HTML,
-        reply_markup=types.ReplyKeyboardRemove() # Убираем кнопку "Заполнить анкету"
+        parse_mode=ParseMode.HTML
     )
+    await callback.answer()
 
 # Шаг 4: Обрабатываем сообщение с информацией профиля
 @dp.message(DemoForm.waiting_for_profile_info)
 async def process_profile_info(message: Message, state: FSMContext):
     try:
+        logging.info(f"User {message.from_user.id} sent profile info.") # Логируем получение информации профиля
         # Пересылаем сообщение в чат админа
         await bot.forward_message(chat_id=ADMIN_CHAT_ID, from_chat_id=message.chat.id, message_id=message.message_id)
         # Сохраняем информацию профиля в состояние
@@ -120,6 +122,7 @@ async def process_profile_info(message: Message, state: FSMContext):
 async def process_demo(message: Message, state: FSMContext):
     if message.audio and message.audio.mime_type == "audio/mpeg":
         try:
+            logging.info(f"User {message.from_user.id} sent a demo.") # Логируем получение демки
             # Пересылаем демку в чат админа
             await bot.send_audio(chat_id=ADMIN_CHAT_ID, audio=message.audio.file_id)
             # Получаем информацию об анкете из состояния
@@ -148,12 +151,24 @@ async def process_demo(message: Message, state: FSMContext):
 # Обработчик для команды send_demo (если нужна возможность отправки нескольких демок подряд)
 @dp.callback_query(F.data == "send_demo")
 async def send_demo_callback(callback: CallbackQuery, state: FSMContext):
+    logging.info(f"User {callback.from_user.id} wants to send another demo.") # Логируем запрос на отправку еще одной демки
     await callback.answer()
-    await fill_form_start(callback.message, state)  # Запускаем процесс заполнения анкеты заново
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Заполнить анкету", callback_data="fill_form")]
+    ])
+    await bot.send_message(callback.message.chat.id,
+        "Поделись с нами треком, если:\n"
+        "1. Трек подходит жанрово нашему лейблу\n"
+        "2. Трек закончен на 90% <i>(не обязательно, чтобы трек был отмастерен и сведён)</i>\n"
+        "3. Если у тебя много демок, выбери 1-2 лучших для отправки. Не отправляй сразу всё\n"
+        "4. К предложению принимаются <b><ins>ТОЛЬКО</ins></b> не подписанные другими лейблами демо-треки",
+        reply_markup=keyboard, parse_mode=ParseMode.HTML
+    )
+
 
 @dp.message()
 async def echo(message: types.Message):
-    await message.answer(f"Я не понимаю эту команду. Используйте /start или кнопку 'Заполнить анкету'.")
+    await message.answer(f"Я не понимаю эту команду. Пожалуйста, начните с команды /start.")
 
 
 # --- RUN BOT ---
