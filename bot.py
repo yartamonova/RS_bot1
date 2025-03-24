@@ -102,7 +102,7 @@ async def process_profile_info(message: Message, state: FSMContext):
     try:
         await bot.forward_message(chat_id=ADMIN_CHAT_ID, from_chat_id=message.chat.id, message_id=message.message_id)  # Пересылаем сообщение в чат админа
         await state.set_state(DemoForm.waiting_for_demo) # Переходим в состояние ожидания демки
-        await message.reply("Отлично! \n\n Теперь отправь демку в формате MP3")
+        await message.reply("Отлично! \n Теперь отправь демку в формате MP3 \n\n ВАЖНО: название трека и артистический псевдоним, указанные в анкете, должны совпадать с названием MP3-файла)")
     except Exception as e:
         print(f"Ошибка при пересылке: {e}")
         await message.reply("Произошла ошибка при пересылке сообщения. Попробуйте еще раз.")
