@@ -102,7 +102,7 @@ async def process_profile_info(message: Message, state: FSMContext):
     try:
         await bot.forward_message(chat_id=ADMIN_CHAT_ID, from_chat_id=message.chat.id, message_id=message.message_id)  # Пересылаем сообщение в чат админа
         await state.set_state(DemoForm.waiting_for_demo) # Переходим в состояние ожидания демки
-        await message.reply("Отлично! Теперь отправь, пожалуйста, демку в формате MP3.")
+        await message.reply("Отлично! Теперь отправь демку в формате MP3")
     except Exception as e:
         print(f"Ошибка при пересылке: {e}")
         await message.reply("Произошла ошибка при пересылке сообщения. Попробуйте еще раз.")
@@ -118,7 +118,7 @@ async def process_demo(message: Message, state: FSMContext):
             [InlineKeyboardButton(text="Отправить ещё одну демку", callback_data="send_demo")]
         ])
         await bot.send_message(message.chat.id,
-            "Супер!\nАнкета и демка отправлены.\n\nПослушаем и дадим обратную связь\n\n <i>Если отправился демо-трек без анкеты или наоборот, нажимай «Отправить ещё одну демку»</i>",
+            "Супер!\nАнкета и демка отправлены\n\nПослушаем и дадим обратную связь",
             reply_markup=keyboard, parse_mode=ParseMode.HTML  # Добавлен parse_mode
         )
         await state.clear()  # Сбрасываем состояние
