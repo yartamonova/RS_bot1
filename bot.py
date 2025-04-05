@@ -96,17 +96,23 @@ async def fill_form_callback(callback: CallbackQuery, state: FSMContext):
     await state.set_state(DemoForm.waiting_for_profile_info) # Ждем информацию профиля (1-7)
     await callback.answer()
 
-# Шаг 4: Обрабатываем информацию профиля (пункты 1-7)
-@dp.message(DemoForm.waiting_for_profile_info)
+# Шаг 4: Обрабатываем информацию профиля (пункты 1-7) - ТОЛЬКО ТЕКСТ
+@dp.message(DemoForm.waiting_for_profile_info, F.text)
 async def process_profile_info(message: Message, state: FSMContext):
     try:
         await bot.forward_message(chat_id=ADMIN_CHAT_ID, from_chat_id=message.chat.id, message_id=message.message_id)  # Пересылаем сообщение в чат админа
         await state.set_state(DemoForm.waiting_for_demo) # Переходим в состояние ожидания демки
-        await message.reply("Отлично! \nТеперь прикрепи к сообщению демку в формате MP3 \n\n <i>ВАЖНО: \n 1. демки ссылками на облачное хранилище не принимаются \n 2. указанные в анкете название трека и артистический псевдоним должны совпадать с названием MP3-файла \n 3. если отправляешь две демки, они должны быть отправлены ОДНИМ сообщением</i>")
+        await message.reply("Отлично! \nТеперь прикрепи к сообщению демку в формате MP3 \n\n <i>ВАЖНО: \n 1. демки ссылками на облачное хранилище не принимаются \n 2. указанные в анкете название трека и артистический псевдоним должны совпадать с названием MP3-файла \n 3. если отправляешь две демки, они должны быть отправлены ОДНИМ сообщением</i>", parse_mode=ParseMode.HTML)
     except Exception as e:
         print(f"Ошибка при пересылке: {e}")
         await message.reply("Произошла ошибка при пересылке сообщения. Попробуйте еще раз.")
         await state.clear() # Сбрасываем состояние
+
+# Если прислали что-то кроме текста на этапе заполнения анкеты
+@dp.message(DemoForm.waiting_for_profile_info)
+async def process_invalid_profile_info(message: Message, state: FSMContext):
+    await message.reply("Информацию о себе нужно отправить текстовым сообщением")
+    await state.set_state(DemoForm.waiting_for_profile_info) # Возвращаемся в состояние ожидания текста
 
 # Шаг 5: Обрабатываем демку (пункт 8)
 @dp.message(DemoForm.waiting_for_demo, F.audio) # F.audio - более современный способ фильтрации аудио
