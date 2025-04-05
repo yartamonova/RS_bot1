@@ -111,7 +111,7 @@ async def process_profile_info(message: Message, state: FSMContext):
 # Если прислали что-то кроме текста на этапе заполнения анкеты
 @dp.message(DemoForm.waiting_for_profile_info)
 async def process_invalid_profile_info(message: Message, state: FSMContext):
-    await message.reply("Информацию о себе нужно отправить текстовым сообщением")
+    await message.reply("Информацию о себе отправляй текстовым сообщением :)")
     await state.set_state(DemoForm.waiting_for_profile_info) # Возвращаемся в состояние ожидания текста
 
 # Шаг 5: Обрабатываем демку (пункт 8)
